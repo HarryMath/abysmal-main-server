@@ -3,7 +3,6 @@ import { NodeEntity, NodeServer } from './node';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cluster } from './cluster';
-import { NodeDTO } from '../../dist/nodes/node';
 
 @Injectable()
 export class NodesService {
@@ -31,7 +30,7 @@ export class NodesService {
     });
   }
 
-  async provideServer(): Promise<NodeDTO> {
+  async provideServer(): Promise<NodeEntity> {
     const candidates = this.activeServers.filter(s => s.playersAmount < 100);
     if (candidates.length === 0) {
       return await this.createNewServer();
@@ -48,6 +47,32 @@ export class NodesService {
       throw new NotFoundException();
     }
     oldServer.playersAmount = server.playersAmount;
+  }
+
+  registerServer(server: NodeEntity): void {
+    const oldServer = this.activeServers.find(s => s.ip === server.ip && s.port === server.port);
+    if (!oldServer) {
+      this.activeServers.push(server);
+      this.serversRepository.save(server);
+    } else { // unreachable part of code
+      oldServer.playersAmount = server.playersAmount;
+    }
+    for (let i = 0; i < this.consumers.length; i++) {
+      this.consumers[i](server);
+      this.consumers.splice(i--, 1);
+    }
+  }
+
+  removeClosedServer(ip: string, port: number): void {
+    let i = 0;
+    for (let s of this.activeServers) {
+      if (s.ip === ip && s.port == port) {
+        this.activeServers.splice(i, 1);
+        break;
+      }
+      i++;
+    }
+    this.serversRepository.delete({ip, port});
   }
 
   private async createNewServer(): Promise<NodeEntity> {
@@ -70,30 +95,5 @@ export class NodesService {
     return new Promise((resolve => {
       this.consumers.push(s => resolve(s));
     }));
-  }
-
-  registerServer(server: NodeEntity): void {
-    const oldServer = this.activeServers.find(s => s.ip === server.ip && s.port === server.port);
-    if (!oldServer) {
-      this.activeServers.push(server);
-    } else { // unreachable part of code
-      oldServer.playersAmount = server.playersAmount;
-    }
-    for (let i = 0; i < this.consumers.length; i++) {
-      this.consumers[i](server);
-      this.consumers.splice(i--, 1);
-    }
-  }
-
-  async removeClosedServer(ip: string, port: number): Promise<void> {
-    let i = 0;
-    for (let s of this.activeServers) {
-      if (s.ip === ip && s.port == port) {
-        this.activeServers.splice(i, 1);
-        break;
-      }
-      i++;
-    }
-    await this.serversRepository.delete({ip, port});
   }
 }

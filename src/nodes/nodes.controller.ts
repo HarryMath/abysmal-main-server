@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Ip, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Ip, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { NodesService } from './nodes.service';
 import { NodeEntity } from './node';
 
@@ -14,7 +14,7 @@ export class NodesController {
   @Post()
   registerServer(
     @Body() node: NodeEntity,
-    @Ip() ip,
+    @Ip() ip: string,
   ) {
     node.ip = ip;
     this.nodesService.registerServer(node)
@@ -26,7 +26,14 @@ export class NodesController {
     @Ip() ip,
   ) {
     node.ip = ip;
-    node.playersAmount > 0 ? this.nodesService.updateServer(node) :
-      this.nodesService.removeClosedServer(node.ip, node.port);
+    node.playersAmount > 0 && this.nodesService.updateServer(node);
+  }
+  
+  @Delete()
+  closeServer(
+    @Param('port', ParseIntPipe) port: number,
+    @Ip() ip: string
+  ) {
+    this.nodesService.removeClosedServer(ip, port);
   }
 }
