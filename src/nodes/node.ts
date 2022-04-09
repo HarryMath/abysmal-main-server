@@ -3,7 +3,8 @@ const axios = require('axios')
 
 export interface NodeEntity {
   ip: string;
-  port: number;
+  udpPort: number;
+  tcpPort: number;
   playersAmount: number;
 }
 
@@ -13,21 +14,23 @@ export class NodeServer {
   ip: string;
 
   @PrimaryColumn('int', {})
-  port: number;
+  udpPort: number;
+
+  @Column('int', {})
+  tcpPort: number;
 
   @Column('int', {default: 0})
   playersAmount: number;
 
   async verify(): Promise<boolean> {
     try {
-      const response = await axios.get(`https://${this.ip}:${this.port}/players/amount`);
-      console.log(`statusCode: ${response.status}`);
-      console.log(`body: ${response.body}`);
+      const host = this.ip.replace('::ffff:', '');
+      const response = await axios.get(`http://${host}:${this.tcpPort}/players/amount`);
       if (response.status == 200) {
-        this.playersAmount = parseInt(response.body);
-        return false;
+        this.playersAmount = parseInt(response.data);
+        return true;
       }
-      return true;
+      return false;
     } catch (e) {
       return false;
     }

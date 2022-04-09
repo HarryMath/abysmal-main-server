@@ -21,12 +21,12 @@ export class NodesService {
     const servers = await this.serversRepository.find();
     for (let i = 0; i < servers.length; i++) {
       if (!await servers[i].verify()) {
-        await this.removeClosedServer(servers[i].ip, servers[i].port);
-        servers.slice(i--, 1);
+        await this.removeClosedServer(servers[i].ip, servers[i].udpPort);
+        servers.splice(i--, 1);
       }
     }
     this.activeServers = servers.map(s => {
-      return {ip: s.ip, port: s.port, playersAmount: s.playersAmount};
+      return {ip: s.ip, udpPort: s.udpPort, tcpPort: s.tcpPort, playersAmount: s.playersAmount};
     });
   }
 
@@ -42,7 +42,7 @@ export class NodesService {
   }
 
   updateServer(server: NodeEntity): void {
-    const oldServer = this.activeServers.find(s => s.ip === server.ip && s.port === server.port);
+    const oldServer = this.activeServers.find(s => s.ip === server.ip && s.udpPort === server.udpPort);
     if (!oldServer) { // unreachable part of code
       throw new NotFoundException();
     }
@@ -50,12 +50,14 @@ export class NodesService {
   }
 
   registerServer(server: NodeEntity): void {
-    const oldServer = this.activeServers.find(s => s.ip === server.ip && s.port === server.port);
+    const oldServer = this.activeServers.find(s => s.ip === server.ip && s.udpPort === server.udpPort);
     if (!oldServer) {
       this.activeServers.push(server);
       this.serversRepository.save(server);
     } else { // unreachable part of code
+      oldServer.tcpPort = server.tcpPort;
       oldServer.playersAmount = server.playersAmount;
+      this.serversRepository.update({ip: server.ip, udpPort: server.udpPort}, server);
     }
     for (let i = 0; i < this.consumers.length; i++) {
       this.consumers[i](server);
@@ -66,13 +68,14 @@ export class NodesService {
   removeClosedServer(ip: string, port: number): void {
     let i = 0;
     for (let s of this.activeServers) {
-      if (s.ip === ip && s.port == port) {
+      if (s.ip === ip && s.udpPort == port) {
         this.activeServers.splice(i, 1);
         break;
       }
       i++;
     }
-    this.serversRepository.delete({ip, port});
+    console.log('removing closed serer');
+    this.serversRepository.delete({ip, udpPort: port});
   }
 
   private async createNewServer(): Promise<NodeEntity> {

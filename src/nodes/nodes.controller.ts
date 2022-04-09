@@ -23,7 +23,7 @@ export class NodesController {
   @Patch()
   updateServer(
     @Body() node: NodeEntity,
-    @Ip() ip,
+    @Ip() ip: string,
   ) {
     node.ip = ip;
     node.playersAmount > 0 && this.nodesService.updateServer(node);

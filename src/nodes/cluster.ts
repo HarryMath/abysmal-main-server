@@ -11,7 +11,8 @@ export class Cluster {
 
   async createServer(): Promise<boolean> {
     try {
-      const response = await axios.post(`https://${this.ip}:${8080}/nodes/create`);
+      const host = this.ip.replace('::ffff:', '');
+      const response = await axios.post(`http://${host}:${22}/nodes/create`);
       return response.status == 200;
     } catch (e) {
       return false;

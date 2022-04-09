@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
-import { NodesController } from './nodes/nodes.controller';
-import { NodesService } from './nodes/nodes.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { NodeServer } from './nodes/node';
+import { NodesModule } from './nodes/nodes.module';
 
 @Module({
   imports: [
@@ -17,14 +16,17 @@ import { NodeServer } from './nodes/node';
       username: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [NodeServer],
+      keepConnectionAlive: false,
       synchronize: false,
-      retryAttempts: 3,
-      retryDelay: 2000
+      dropSchema: false,
+      retryAttempts: 1,
+      retryDelay: 5000,
+      entities: [NodeServer],
+      extra: {
+        connectionLimit: 3,
+      }
     }),
-    TypeOrmModule.forFeature([NodeServer])
-  ],
-  controllers: [NodesController],
-  providers: [NodesService],
+    NodesModule
+  ]
 })
 export class AppModule {}
