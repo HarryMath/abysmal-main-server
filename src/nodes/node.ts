@@ -6,6 +6,7 @@ export interface NodeEntity {
   udpPort: number;
   tcpPort: number;
   playersAmount: number;
+  seed: number;
 }
 
 @Entity('nodes')
@@ -21,6 +22,10 @@ export class NodeServer {
 
   @Column('int', {default: 0})
   playersAmount: number;
+
+  @Column('bigint', {})
+  seed: number;
+
 
   async verify(): Promise<boolean> {
     try {

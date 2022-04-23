@@ -25,9 +25,7 @@ export class NodesService {
         servers.splice(i--, 1);
       }
     }
-    this.activeServers = servers.map(s => {
-      return {ip: s.ip, udpPort: s.udpPort, tcpPort: s.tcpPort, playersAmount: s.playersAmount};
-    });
+    this.activeServers = servers;
   }
 
   async provideServer(): Promise<NodeEntity> {
