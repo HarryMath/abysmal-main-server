@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Ip, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { NodesService } from './nodes.service';
 import { NodeEntity } from './node';
+import { RealIP } from 'nestjs-real-ip';
 
 @Controller('nodes')
 export class NodesController {
@@ -14,9 +15,13 @@ export class NodesController {
   @Post()
   registerServer(
     @Body() node: NodeEntity,
+    @RealIP() realIp: string,
     @Ip() ip: string,
   ) {
     node.ip = ip;
+    console.log('trying to save node: ');
+    console.log(node);
+    console.log('realIP: ' + realIp);
     this.nodesService.registerServer(node)
   }
 

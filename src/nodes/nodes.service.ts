@@ -31,7 +31,7 @@ export class NodesService {
   async provideServer(): Promise<NodeEntity> {
     const candidates = this.activeServers.filter(s => s.playersAmount < 100);
     if (candidates.length === 0) {
-      return await this.createNewServer();
+      return this.activeServers.length === 0 ? null : await this.createNewServer();
     }
     const bestPlayersAmountAvailable = Math.min(
       ...candidates.map(s => {return s.playersAmount})
@@ -50,9 +50,11 @@ export class NodesService {
   registerServer(server: NodeEntity): void {
     const oldServer = this.activeServers.find(s => s.ip === server.ip && s.udpPort === server.udpPort);
     if (!oldServer) {
+      console.log('saving new node');
       this.activeServers.push(server);
       this.serversRepository.save(server);
     } else { // unreachable part of code
+      console.log('updating old node');
       oldServer.tcpPort = server.tcpPort;
       oldServer.playersAmount = server.playersAmount;
       this.serversRepository.update({ip: server.ip, udpPort: server.udpPort}, server);
