@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { NodeServer } from './nodes/node';
 import { NodesModule } from './nodes/nodes.module';
+import { TimeController } from './time/time.controller';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { NodesModule } from './nodes/nodes.module';
       }
     }),
     NodesModule
-  ]
+  ],
+  controllers: [TimeController]
 })
 export class AppModule {}
