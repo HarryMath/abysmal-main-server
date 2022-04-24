@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Ip, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { NodesService } from './nodes.service';
 import { NodeEntity } from './node';
 import { RealIP } from 'nestjs-real-ip';
@@ -15,20 +15,16 @@ export class NodesController {
   @Post()
   registerServer(
     @Body() node: NodeEntity,
-    @RealIP() realIp: string,
-    @Ip() ip: string,
+    @RealIP() ip: string,
   ) {
     node.ip = ip;
-    console.log('trying to save node: ');
-    console.log(node);
-    console.log('realIP: ' + realIp);
     this.nodesService.registerServer(node)
   }
 
   @Patch()
   updateServer(
     @Body() node: NodeEntity,
-    @Ip() ip: string,
+    @RealIP() ip: string,
   ) {
     node.ip = ip;
     node.playersAmount > 0 && this.nodesService.updateServer(node);
@@ -37,7 +33,7 @@ export class NodesController {
   @Delete()
   closeServer(
     @Param('port', ParseIntPipe) port: number,
-    @Ip() ip: string
+    @RealIP() ip: string
   ) {
     this.nodesService.removeClosedServer(ip, port);
   }
