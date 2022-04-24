@@ -31,11 +31,13 @@ export class NodesService {
   async provideServer(): Promise<NodeEntity> {
     const candidates = this.activeServers.filter(s => s.playersAmount < 100);
     if (candidates.length === 0) {
+      console.log("no candidates. trying to launch server");
       return this.activeServers.length === 0 ? null : await this.createNewServer();
     }
-    const bestPlayersAmountAvailable = Math.min(
+    const bestPlayersAmountAvailable = Math.max(
       ...candidates.map(s => {return s.playersAmount})
     );
+    console.log('best players amount is: ' + bestPlayersAmountAvailable);
     return candidates.find(c => c.playersAmount === bestPlayersAmountAvailable);
   }
 
