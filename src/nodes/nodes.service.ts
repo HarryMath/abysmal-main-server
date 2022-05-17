@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { NodeEntity, NodeServer } from './node';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,6 +9,7 @@ export class NodesService {
 
   private activeServers: NodeEntity[] = [];
   private consumers: ((s: NodeEntity) => void)[] = [];
+  private readonly maxPlayersPerNode = 100;
 
   constructor(
     @InjectRepository(NodeServer)
@@ -29,7 +30,14 @@ export class NodesService {
   }
 
   async provideServer(): Promise<NodeEntity> {
-    const candidates = this.activeServers.filter(s => s.playersAmount < 100);
+    let candidates = this.activeServers.filter(s => s.playersAmount < this.maxPlayersPerNode);
+    if (candidates.length === 0) {
+      await this.refresh();
+      if (this.activeServers.length === 0) {
+        throw new HttpException('no available servers', 204);
+      }
+      candidates = this.activeServers.filter(s => s.playersAmount < this.maxPlayersPerNode);
+    }
     if (candidates.length === 0) {
       console.log("no candidates. trying to launch server");
       return this.activeServers.length === 0 ? null : await this.createNewServer();
